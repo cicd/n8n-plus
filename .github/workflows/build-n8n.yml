@@ -1,11 +1,8 @@
-# Naam van de workflow
-name: Build and Push Custom n8n Image
+name: Build and Push Custom n8n Images
 
 on:
-  # Trigger de workflow elke dag om 03:00 UTC
   schedule:
     - cron: '0 3 * * *'
-  # Maakt het ook mogelijk om de workflow handmatig te starten vanuit de GitHub UI
   workflow_dispatch:
 
 jobs:
@@ -13,8 +10,16 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      packages: write 
-
+      packages: write
+    
+    strategy:
+      matrix:
+        include:
+          - n8n_tag: latest
+            image_suffix: ""
+          - n8n_tag: next
+            image_suffix: "-beta"
+    
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -26,33 +31,25 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      # 👇 ADD THIS NEW STEP HERE 👇
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Get latest n8n image digest
+      - name: Get n8n image digest
         id: get_digest
         run: |
-          DIGEST=$(curl -s -H "Accept: application/vnd.docker.distribution.manifest.v2+json" "https://registry-1.docker.io/v2/n8nio/n8n/manifests/latest" | jq -r '.config.digest')
-          echo "Latest n8n digest is $DIGEST"
+          DIGEST=$(curl -s "https://hub.docker.com/v2/repositories/n8nio/n8n/tags/${{ matrix.n8n_tag }}" | jq -r '.digest // .images[0].digest' | cut -c1-12)
+          echo "n8n ${{ matrix.n8n_tag }} digest is $DIGEST"
           echo "digest=$DIGEST" >> $GITHUB_OUTPUT
-
-      - name: Extract metadata for Docker
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ghcr.io/${{ github.repository }}
-          tags: |
-            type=raw,value=latest
-            type=raw,value=${{ steps.get_digest.outputs.digest }}
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
           context: .
           push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=registry,ref=ghcr.io/${{ github.repository }}:latest
-          # cache-to: type=registry,ref=ghcr.io/${{ github.repository }}:latest,mode=max
+          build-args: |
+            N8N_TAG=${{ matrix.n8n_tag }}
+          tags: |
+            ghcr.io/${{ github.repository }}:latest${{ matrix.image_suffix }}
+            ghcr.io/${{ github.repository }}:${{ steps.get_digest.outputs.digest }}${{ matrix.image_suffix }}
+          cache-from: type=registry,ref=ghcr.io/${{ github.repository }}:latest${{ matrix.image_suffix }}
           provenance: false
