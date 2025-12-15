@@ -37,7 +37,7 @@ jobs:
       - name: Get n8n image digest
         id: get_digest
         run: |
-          DIGEST=$(curl -s "https://hub.docker.com/v2/repositories/n8nio/n8n/tags/${{ matrix.n8n_tag }}" | jq -r '.digest // .images[0].digest' | cut -c1-12)
+          DIGEST=$(curl -s "https://hub.docker.com/v2/repositories/n8nio/n8n/tags/${{ matrix.n8n_tag }}" | jq -r '.digest // .images[0].digest' | sed 's/sha256://' | cut -c1-12)
           echo "n8n ${{ matrix.n8n_tag }} digest is $DIGEST"
           echo "digest=$DIGEST" >> $GITHUB_OUTPUT
 
