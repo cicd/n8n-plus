@@ -18,8 +18,8 @@ jobs:
         include:
           - n8n_tag: latest
             image_suffix: ""
-          - n8n_tag: next
-            image_suffix: "-beta"
+          #- n8n_tag: next
+          #  image_suffix: "-beta"
     
     steps:
       - name: Checkout repository
