@@ -11,6 +11,12 @@ RUN if command -v apk > /dev/null; then \
     elif command -v apt-get > /dev/null; then \
         # Debian/Ubuntu
         apt-get update && apt-get install -y --no-install-recommends ffmpeg imagemagick python3 curl wget && rm -rf /var/lib/apt/lists/*; \
+    elif command -v microdnf > /dev/null; then \
+        # Red Hat UBI
+        microdnf install -y ffmpeg imagemagick python3 curl wget; \
+    else \
+        echo "Error: No known package manager (apk, apt-get, microdnf) found. Cannot install dependencies." >&2; \
+        exit 1; \
     fi && \
     # Download yt-dlp (werkt op beide)
     curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -o /usr/local/bin/yt-dlp && \
