@@ -1,28 +1,15 @@
-ARG N8N_TAG=latest
+# 1. Start from the official n8n base image.
+FROM n8nio/n8n:latest
 
-FROM n8nio/n8n:${N8N_TAG}
-
+# 2. Switch to the root user to gain permissions for installing packages.
 USER root
 
-# Detecteer package manager en installeer dependencies
-RUN set -x && \
-    if command -v apk > /dev/null; then \
-        # Alpine Linux
-        apk add --no-cache ffmpeg imagemagick python3 curl wget; \
-    elif command -v apt-get > /dev/null; then \
-        # Debian/Ubuntu
-        apt-get update && apt-get install -y --no-install-recommends ffmpeg imagemagick python3 curl wget && rm -rf /var/lib/apt/lists/*; \
-    elif command -v microdnf > /dev/null; then \
-        # Red Hat UBI: Enable EPEL and install packages
-        microdnf install -y epel-release && \
-        microdnf install -y ffmpeg ImageMagick python3 curl wget && \
-        microdnf clean all; \
-    else \
-        echo "Error: No known package manager (apk, apt-get, microdnf) found. Cannot install dependencies." >&2; \
-        exit 1; \
-    fi && \
-    # Download yt-dlp (works on all)
-    curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -o /usr/local/bin/yt-dlp && \
+# 3. Install FFmpeg and ImageMagick.
+#    Then, download the latest yt-dlp binary and make it executable.
+#    This method avoids Python package conflicts.
+RUN apk add --no-cache ffmpeg imagemagick python3 && \
+    wget https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -O /usr/local/bin/yt-dlp && \
     chmod a+rx /usr/local/bin/yt-dlp
 
+# 4. Switch back to the default non-root user ('node') for security.
 USER node
