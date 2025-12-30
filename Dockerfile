@@ -5,7 +5,8 @@ FROM n8nio/n8n:${N8N_TAG}
 USER root
 
 # Detecteer package manager en installeer dependencies
-RUN if command -v apk > /dev/null; then \
+RUN set -x && \
+    if command -v apk > /dev/null; then \
         # Alpine Linux
         apk add --no-cache ffmpeg imagemagick python3 curl wget; \
     elif command -v apt-get > /dev/null; then \
