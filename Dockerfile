@@ -12,9 +12,9 @@ RUN if command -v apk > /dev/null; then \
         # Debian/Ubuntu
         apt-get update && apt-get install -y --no-install-recommends ffmpeg imagemagick python3 curl wget && rm -rf /var/lib/apt/lists/*; \
     elif command -v microdnf > /dev/null; then \
-        # Red Hat UBI
-        microdnf update -y && \
-        microdnf install -y ffmpeg imagemagick python3 curl wget && \
+        # Red Hat UBI: Enable EPEL and install packages
+        microdnf install -y epel-release && \
+        microdnf install -y ffmpeg ImageMagick python3 curl wget && \
         microdnf clean all; \
     else \
         echo "Error: No known package manager (apk, apt-get, microdnf) found. Cannot install dependencies." >&2; \
