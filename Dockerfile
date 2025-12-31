@@ -1,17 +1,12 @@
-# 1. Start from the official n8n base image.
-FROM n8nio/n8n:latest
+# Use n8n 2.0.2 - last version with apk available
+# (v2.1.0+ removed apk, making custom builds impossible)
+FROM n8nio/n8n:2.0.2
 
-# 2. Switch to the root user to gain permissions for installing packages.
 USER root
 
-# 3. Install FFmpeg, ImageMagick and dependencies.
-#    Then, download the latest yt-dlp binary and make it executable.
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends ffmpeg imagemagick python3 curl && \
+# Install FFmpeg, ImageMagick and yt-dlp
+RUN apk add --no-cache ffmpeg imagemagick python3 curl && \
     curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -o /usr/local/bin/yt-dlp && \
-    chmod a+rx /usr/local/bin/yt-dlp && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
+    chmod a+rx /usr/local/bin/yt-dlp
 
-# 4. Switch back to the default non-root user ('node') for security.
 USER node
